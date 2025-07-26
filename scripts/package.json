@@ -1,0 +1,15 @@
+{
+  "name": "sdrms-scripts",
+  "version": "1.0.0",
+  "description": "Database setup and utility scripts for SDRMS",
+  "main": "setup-database.js",
+  "scripts": {
+    "setup": "node setup-database.js",
+    "test-connection": "node test-connection.js"
+  },
+  "dependencies": {
+    "mongoose": "^8.0.3",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.3.1"
+  }
+}

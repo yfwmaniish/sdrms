@@ -9,15 +9,11 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: sdrms_password_2024
       MONGO_INITDB_DATABASE: sdrms
     volumes:
       - mongodb_data:/data/db
-      - ./docker/mongodb/init:/docker-entrypoint-initdb.d
     networks:
       - sdrms-network
-    command: mongod --replSet rs0 --bind_ip_all
 
   # OpenSearch for Search Functionality
   opensearch:
@@ -45,7 +41,6 @@ services:
         hard: 65536
     volumes:
       - opensearch_data:/usr/share/opensearch/data
-      - ./docker/opensearch/config:/usr/share/opensearch/config
     networks:
       - sdrms-network
 
