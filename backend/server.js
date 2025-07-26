@@ -17,9 +17,9 @@ const uploadRoutes = require('./routes/upload');
 const analyticsRoutes = require('./routes/analytics');
 
 // Import middleware
-const authMiddleware = require('./middleware/auth');
-const errorHandler = require('./middleware/errorHandler');
-const rateLimiter = require('./middleware/rateLimiter');
+const { authMiddleware } = require('./middleware/auth');
+const { errorHandler } = require('./middleware/errorHandler');
+const { rateLimiter } = require('./middleware/rateLimiter');
 
 // Configure logger
 const logger = winston.createLogger({
