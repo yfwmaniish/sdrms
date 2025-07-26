@@ -15,6 +15,8 @@ const subscriberRoutes = require('./routes/subscribers');
 const searchRoutes = require('./routes/search');
 const uploadRoutes = require('./routes/upload');
 const analyticsRoutes = require('./routes/analytics');
+const bulkIngestRoutes = require('./routes/bulkIngest');
+const unifiedSearchRoutes = require('./routes/unifiedSearch');
 
 // Import middleware
 const { authMiddleware } = require('./middleware/auth');
@@ -84,6 +86,8 @@ app.use('/api/subscribers', authMiddleware, subscriberRoutes);
 app.use('/api/search', authMiddleware, searchRoutes);
 app.use('/api/upload', authMiddleware, uploadRoutes);
 app.use('/api/analytics', authMiddleware, analyticsRoutes);
+app.use('/api/bulk', authMiddleware, bulkIngestRoutes);
+app.use('/api/unified', authMiddleware, unifiedSearchRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

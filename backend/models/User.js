@@ -118,12 +118,7 @@ const userSchema = new mongoose.Schema({
   collection: 'users'
 });
 
-// Indexes
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-userSchema.index({ employeeId: 1 });
-userSchema.index({ role: 1 });
-userSchema.index({ isActive: 1 });
+// Indexes (removed duplicates since they're already defined in schema fields)
 
 // Virtual for account lock status
 userSchema.virtual('isLocked').get(function() {

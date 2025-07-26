@@ -8,20 +8,20 @@ const { uploadRateLimit } = require('../middleware/rateLimiter');
 const Subscriber = require('../models/Subscriber');
 
 const uploadDir = process.env.UPLOAD_DIR || './uploads';
-const allowedFileTypes = process.env.ALLOWED_FILE_TYPES.split(',');
+const allowedFileTypes = (process.env.ALLOWED_FILE_TYPES || 'csv,xlsx,txt,mdb').split(',');
 
 // Configure Multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) = {
+  destination: (req, file, cb) => {
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) = {
+  filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `${uuidv4()}${ext}`);
   }
 });
 
-const fileFilter = (req, file, cb) = {
+const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   if (!allowedFileTypes.includes(ext.substring(1))) {
     return cb(new Error('File type is not allowed'), false);
@@ -39,7 +39,7 @@ const upload = multer({
 const { parseCSV, parseXLSX, parseTXT, parseMDB } = require('../utils/parsers');
 
 // Handle bulk upload
-router.post('/', requirePermission('upload_data'), uploadRateLimit, upload.single('file'), async (req, res) = {
+router.post('/', requirePermission('upload_data'), uploadRateLimit, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -68,7 +68,7 @@ router.post('/', requirePermission('upload_data'), uploadRateLimit, upload.singl
     }
 
     // Validate and save data
-    const bulkOps = parsedData.map(subscriber = {
+    const bulkOps = parsedData.map(subscriber => {
       return {
         updateOne: {
           filter: { mobileNumber: subscriber.mobileNumber },

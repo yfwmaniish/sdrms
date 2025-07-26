@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Subscriber = require('../models/Subscriber');
 const { check, validationResult } = require('express-validator');
-const authMiddleware = require('../middleware/auth');
-const rateLimiter = require('../middleware/rateLimiter');
+const { authMiddleware } = require('../middleware/auth');
+const { rateLimiter } = require('../middleware/rateLimiter');
 
 // Create new subscriber
 router.post('/', authMiddleware, rateLimiter, [

@@ -8,23 +8,15 @@ require('dotenv').config();
 
 // Initialize OpenSearch client
 const opensearchClient = new Client({
-  node: process.env.OPENSEARCH_URL || 'https://localhost:9200',
-  auth: {
-    username: process.env.OPENSEARCH_USERNAME || 'admin',
-    password: process.env.OPENSEARCH_PASSWORD || 'admin'
-  },
-  ssl: {
-    rejectUnauthorized: false // For development only, set to true in production
-  }
+  node: process.env.OPENSEARCH_URL || 'http://localhost:9200'
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI)
 .then(() => {
   logger.info('Connected to MongoDB successfully');
+  // Start watching change stream after successful connection
+  watchChangeStream();
 })
 .catch((err) => {
   logger.error('MongoDB connection error:', err);
@@ -33,15 +25,23 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Watch MongoDB change stream
 const watchChangeStream = async () => {
-  const subscriberCollection = mongoose.connection.collection('subscribers');
+  // Wait for MongoDB connection to be ready
+  if (mongoose.connection.readyState !== 1) {
+    logger.info('Waiting for MongoDB connection...');
+    setTimeout(watchChangeStream, 1000);
+    return;
+  }
 
+  const subscriberCollection = mongoose.connection.collection('subscribers');
   logger.info('Setting up change stream listener for subscribers collection');
 
   try {
-    const changeStream = subscriberCollection.watch();
+    const changeStream = subscriberCollection.watch([], {
+      fullDocument: 'updateLookup'
+    });
 
     changeStream.on('change', async (change) => {
-      logger.info('Change detected:', change);
+      logger.info(`Change detected: ${change.operationType} on document ${change.documentKey._id}`);
 
       switch (change.operationType) {
         case 'insert':
@@ -49,8 +49,8 @@ const watchChangeStream = async () => {
           break;
 
         case 'update':
-          const updatedSubscriber = await subscriberCollection.findOne({ _id: change.documentKey._id });
-          await handleInsert(updatedSubscriber);
+        case 'replace':
+          await handleInsert(change.fullDocument);
           break;
 
         case 'delete':
@@ -64,12 +64,18 @@ const watchChangeStream = async () => {
 
     changeStream.on('error', (err) => {
       logger.error('Change stream error:', err);
-      process.exit(1);
+      // Attempt to restart change stream after error
+      setTimeout(() => {
+        logger.info('Attempting to restart change stream...');
+        watchChangeStream();
+      }, 5000);
     });
 
     changeStream.on('close', () => {
       logger.warn('Change stream closed');
     });
+
+    logger.info('Change stream monitoring started successfully');
 
   } catch (err) {
     logger.error('Error setting up change stream:', err);
@@ -105,8 +111,4 @@ const handleDelete = async (subscriberId) => {
   }
 };
 
-// Start watching change stream
-watchChangeStream().catch(err => {
-  logger.error('Error watching change stream:', err);
-  process.exit(1);
-});
+// Change stream will be started after MongoDB connection is established

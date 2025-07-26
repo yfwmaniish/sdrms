@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # MongoDB Primary Database
+  # MongoDB Primary Database (Replica Set)
   mongodb:
     image: mongo:7.0
     container_name: sdrms-mongodb
@@ -14,6 +14,12 @@ services:
       - mongodb_data:/data/db
     networks:
       - sdrms-network
+    command: [
+      "mongod",
+      "--replSet", "sdrms-rs",
+      "--bind_ip_all",
+      "--port", "27017"
+    ]
 
   # OpenSearch for Search Functionality
   opensearch:
@@ -27,15 +33,11 @@ services:
       - cluster.name=sdrms-cluster
       - node.name=sdrms-node
       - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
-      - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=false"
-      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=SdrmsAdmin@2024"
+      - bootstrap.memory_lock=false
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=false"
+      - "DISABLE_SECURITY_PLUGIN=true"
     ulimits:
-      memlock:
-        soft: -1
-        hard: -1
       nofile:
         soft: 65536
         hard: 65536
@@ -52,8 +54,8 @@ services:
     ports:
       - "5601:5601"
     environment:
-      OPENSEARCH_HOSTS: '["https://opensearch:9200"]'
-      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "false"
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
     volumes:
       - ./docker/opensearch-dashboards/config:/usr/share/opensearch-dashboards/config
     networks:
@@ -73,10 +75,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      MONGODB_URI: mongodb://admin:sdrms_password_2024@mongodb:27017/sdrms?authSource=admin
-      OPENSEARCH_URL: https://opensearch:9200
-      OPENSEARCH_USERNAME: admin
-      OPENSEARCH_PASSWORD: SdrmsAdmin@2024
+      MONGODB_URI: mongodb://mongodb:27017/sdrms?replicaSet=sdrms-rs
+      OPENSEARCH_URL: http://opensearch:9200
       JWT_SECRET: sdrms_jwt_secret_2024_haryana
     volumes:
       - ./backend:/app
@@ -96,10 +96,8 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: development
-      MONGODB_URI: mongodb://admin:sdrms_password_2024@mongodb:27017/sdrms?authSource=admin
-      OPENSEARCH_URL: https://opensearch:9200
-      OPENSEARCH_USERNAME: admin
-      OPENSEARCH_PASSWORD: SdrmsAdmin@2024
+      MONGODB_URI: mongodb://mongodb:27017/sdrms?replicaSet=sdrms-rs
+      OPENSEARCH_URL: http://opensearch:9200
     volumes:
       - ./sync-service:/app
       - /app/node_modules
